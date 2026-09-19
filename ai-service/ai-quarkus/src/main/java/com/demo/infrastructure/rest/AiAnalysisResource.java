@@ -29,7 +29,7 @@ public class AiAnalysisResource {
         log.info("Direct fraud analysis requested for order {} from {}",
                 request.orderId(), request.country());
 
-        return fraudDetectionAI.analyzeForFraud(
+        return Uni.createFrom().item(() -> fraudDetectionAI.analyzeForFraud(
                 request.orderId(),
                 request.amount(),
                 request.country(),
@@ -37,7 +37,7 @@ public class AiAnalysisResource {
                 request.customerEmail(),
                 request.itemCount(),
                 request.customerHistory()
-        );
+        ));
     }
 
     public record AnalyzeRequest(

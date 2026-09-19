@@ -4,7 +4,6 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 import io.quarkiverse.langchain4j.RegisterAiService;
-import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @RegisterAiService
@@ -38,7 +37,7 @@ public interface FraudDetectionAI {
             - Cantidad de items: {itemCount}
             - Historial del cliente: {customerHistory}
             """)
-    Uni<String> analyzeForFraud(
+    String analyzeForFraud(
             @V("orderId") String orderId,
             @V("amount") String amount,
             @V("country") String country,

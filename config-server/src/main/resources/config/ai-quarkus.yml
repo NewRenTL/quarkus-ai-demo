@@ -5,9 +5,11 @@
 
 quarkus:
   langchain4j:
-    google-ai-gemini:
-      model-name: gemini-2.5-flash
-      temperature: 0.1
+    openai:
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai/
+      chat-model:
+        model-name: gemini-2.5-flash
+        temperature: 0.1
     timeout: 30s
     log-requests: true
     log-responses: true

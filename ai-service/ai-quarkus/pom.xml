@@ -36,20 +36,24 @@
             <artifactId>quarkus-messaging-kafka</artifactId>
         </dependency>
 
-        <!-- LangChain4j + Gemini -->
+        <!-- LangChain4j + Gemini via OpenAI-compatible endpoint -->
         <dependency>
             <groupId>io.quarkiverse.langchain4j</groupId>
             <artifactId>quarkus-langchain4j-core</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.langchain4j</groupId>
-            <artifactId>quarkus-langchain4j-google-ai-gemini</artifactId>
+            <artifactId>quarkus-langchain4j-openai</artifactId>
         </dependency>
 
-        <!-- Health + Metrics -->
+        <!-- Health + Metrics + OpenAPI -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-openapi</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>

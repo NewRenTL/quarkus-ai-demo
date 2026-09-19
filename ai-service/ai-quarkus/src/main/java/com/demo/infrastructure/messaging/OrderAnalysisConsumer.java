@@ -48,7 +48,8 @@ public class OrderAnalysisConsumer {
 
         log.info("Analyzing order {} from {} for fraud...", orderId, country);
 
-        return fraudDetectionAI.analyzeForFraud(orderId, amount, country, hour, email, itemCount, history)
+        return Uni.createFrom().item(() ->
+                        fraudDetectionAI.analyzeForFraud(orderId, amount, country, hour, email, itemCount, history))
                 .flatMap(aiResponse -> {
                     try {
                         FraudAnalysisResult result = objectMapper.readValue(aiResponse, FraudAnalysisResult.class);

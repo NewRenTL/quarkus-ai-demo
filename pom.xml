@@ -49,12 +49,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- google-ai-gemini no está gestionado por el BOM 0.23.0 — versión explícita -->
-            <dependency>
-                <groupId>io.quarkiverse.langchain4j</groupId>
-                <artifactId>quarkus-langchain4j-google-ai-gemini</artifactId>
-                <version>0.23.0</version>
-            </dependency>
             <!-- BOM Spring Boot -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
