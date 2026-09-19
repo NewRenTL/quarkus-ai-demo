@@ -33,17 +33,17 @@
         <!-- Kafka -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-reactive-messaging-kafka</artifactId>
+            <artifactId>quarkus-messaging-kafka</artifactId>
         </dependency>
 
-        <!-- LangChain4j + Gemini — la magia de IA declarativa -->
+        <!-- LangChain4j + Gemini -->
         <dependency>
             <groupId>io.quarkiverse.langchain4j</groupId>
             <artifactId>quarkus-langchain4j-core</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.langchain4j</groupId>
-            <artifactId>quarkus-langchain4j-ai-gemini</artifactId>
+            <artifactId>quarkus-langchain4j-google-ai-gemini</artifactId>
         </dependency>
 
         <!-- Health + Metrics -->

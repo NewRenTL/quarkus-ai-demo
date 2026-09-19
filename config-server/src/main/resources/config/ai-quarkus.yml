@@ -5,7 +5,7 @@
 
 quarkus:
   langchain4j:
-    gemini:
+    google-ai-gemini:
       model-name: gemini-2.5-flash
       temperature: 0.1
     timeout: 30s
