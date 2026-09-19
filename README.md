@@ -120,13 +120,19 @@ sudo apt update && sudo apt install k6
 
 ## Inicio rápido
 
-### 1. Configura tu API key de Gemini
+### 1. Crea y configura el archivo de entorno
+```bash
+# Linux / Mac
+cp .env.example .env
+
+# Windows (PowerShell)
+copy .env.example .env
 ```
-# Edita .env y pon tu key real:
-GEMINI_API_KEY=tu-key-aqui
-```
+Abre `.env` y reemplaza `your-gemini-api-key-here` con tu API key real.
+Consíguela gratis en https://aistudio.google.com/app/apikey
 
 ### 2. Compila todos los módulos
+> La primera vez descarga dependencias Maven — puede tardar 5-10 minutos.
 ```bash
 mvn clean package -DskipTests
 ```
@@ -134,7 +140,7 @@ mvn clean package -DskipTests
 ### 3. Levanta el stack
 ```bash
 # Opción A: docker compose directo
-docker compose up -d
+docker compose up --build -d
 
 # Opción B: Tilt (UI visual con logs por servicio)
 tilt up
@@ -144,6 +150,8 @@ tilt up
 ```bash
 docker compose ps
 ```
+Todos los servicios deben aparecer como `healthy` o `running`.
+Si alguno aparece como `Exit`, revisa los logs: `docker compose logs <nombre-servicio>`
 
 ---
 
