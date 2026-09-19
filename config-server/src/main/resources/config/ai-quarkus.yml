@@ -1,0 +1,32 @@
+# ============================================================
+# AI SERVICE — QUARKUS + LANGCHAIN4J
+# GEMINI_API_KEY → variable de entorno, nunca aquí
+# ============================================================
+
+quarkus:
+  langchain4j:
+    gemini:
+      model-name: gemini-2.5-flash
+      temperature: 0.1
+    timeout: 30s
+    log-requests: true
+    log-responses: true
+  log:
+    level: INFO
+
+mp:
+  messaging:
+    incoming:
+      orders-created-in:
+        connector: smallrye-kafka
+        topic: orders.created
+        value:
+          deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        group:
+          id: ai-service
+    outgoing:
+      ai-analysis-out:
+        connector: smallrye-kafka
+        topic: ai.analysis
+        value:
+          serializer: org.apache.kafka.common.serialization.StringSerializer

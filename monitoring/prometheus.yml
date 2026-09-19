@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: 'order-quarkus'
+    static_configs:
+      - targets: ['order-quarkus:8080']
+    metrics_path: '/q/metrics'
+    labels:
+      framework: 'quarkus'
+      service: 'order-service'
+
+  - job_name: 'ai-quarkus'
+    static_configs:
+      - targets: ['ai-quarkus:8081']
+    metrics_path: '/q/metrics'
+    labels:
+      framework: 'quarkus'
+      service: 'ai-service'
+
+  - job_name: 'order-spring'
+    static_configs:
+      - targets: ['order-spring:8090']
+    metrics_path: '/actuator/prometheus'
+    labels:
+      framework: 'spring'
+      service: 'order-service'
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['prometheus:9090']

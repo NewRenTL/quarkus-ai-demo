@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-spring
+  labels:
+    app: order-spring
+    framework: spring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-spring
+  template:
+    metadata:
+      labels:
+        app: order-spring
+        framework: spring
+    spec:
+      containers:
+        - name: order-spring
+          image: order-spring:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8090
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://postgres-spring:5432/ordersdb_spring"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              value: "postgres"
+            - name: KAFKA_BROKERS
+              value: "kafka:9092"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8090
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8090
+            initialDelaySeconds: 20
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-spring
+spec:
+  selector:
+    app: order-spring
+  ports:
+    - port: 8090
+      targetPort: 8090
+  type: ClusterIP

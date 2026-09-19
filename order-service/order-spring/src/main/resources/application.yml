@@ -1,0 +1,23 @@
+server:
+  port: 8090   # Puerto distinto para correr lado a lado con Quarkus
+
+spring:
+  application:
+    name: order-spring
+
+  # --- Config Server ---
+  # optional: no falla si el Config Server no está disponible (útil en dev)
+  # En prod quitar "optional:" para que sea obligatorio
+  config:
+    import: "optional:configserver:http://localhost:8888"
+
+  # --- Base de datos (secretos via env vars) ---
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5435/ordersdb_spring}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  # --- Kafka bootstrap (secreto/infra via env var) ---
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}

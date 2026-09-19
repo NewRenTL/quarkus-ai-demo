@@ -1,0 +1,228 @@
+version: '3.8'
+
+# ============================================================
+# STACK COMPLETO: Quarkus vs Spring Boot + Monitoring
+# Uso: docker compose up -d
+# ============================================================
+
+services:
+
+  # --- INFRAESTRUCTURA ---
+
+  postgres-quarkus:
+    image: postgres:16-alpine
+    container_name: postgres-quarkus
+    environment:
+      POSTGRES_DB: ordersdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_quarkus_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-spring:
+    image: postgres:16-alpine
+    container_name: postgres-spring
+    environment:
+      POSTGRES_DB: ordersdb_spring
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_spring_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8085:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+  # --- CONFIG SERVER (se levanta antes que los servicios) ---
+
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "service=config-server"
+
+  # --- SERVICIOS QUARKUS ---
+
+  order-quarkus:
+    build:
+      context: ./order-service/order-quarkus
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: order-quarkus
+    depends_on:
+      postgres-quarkus:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: postgresql://postgres-quarkus:5432/ordersdb
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      KAFKA_BROKERS: kafka:29092
+      QUARKUS_PROFILE: prod
+    labels:
+      - "service=order-quarkus"
+      - "framework=quarkus"
+
+  ai-quarkus:
+    build:
+      context: ./ai-service/ai-quarkus
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: ai-quarkus
+    depends_on:
+      kafka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      QUARKUS_PROFILE: prod
+    labels:
+      - "service=ai-quarkus"
+      - "framework=quarkus"
+
+  notification-quarkus:
+    build:
+      context: ./notification-service/notification-quarkus
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: notification-quarkus
+    depends_on:
+      kafka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      QUARKUS_PROFILE: prod
+    labels:
+      - "service=notification-quarkus"
+      - "framework=quarkus"
+
+  # --- SERVICIO SPRING BOOT ---
+
+  order-spring:
+    build:
+      context: ./order-service/order-spring
+      dockerfile: Dockerfile
+    container_name: order-spring
+    depends_on:
+      postgres-spring:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    ports:
+      - "8090:8090"
+    environment:
+      DB_URL: jdbc:postgresql://postgres-spring:5432/ordersdb_spring
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      KAFKA_BROKERS: kafka:29092
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8888"
+    labels:
+      - "service=order-spring"
+      - "framework=spring"
+
+  # --- MONITORING ---
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: demo123
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_quarkus_data:
+  postgres_spring_data:
+  grafana_data:

@@ -1,0 +1,37 @@
+# Secretos — nunca al repositorio
+.env
+.env.*
+!.env.example
+
+# Maven
+target/
+*.class
+
+# IDEs
+.idea/
+*.iml
+.vscode/settings.json
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Quarkus
+.quarkus/
+
+# Logs
+*.log
+logs/
+
+# Native image artifacts
+*.so
+*.dll
+*.dylib
+
+# Docker override (puede tener config local sensible)
+docker-compose.override.yml
+
+AUDIT.md

@@ -1,0 +1,9 @@
+# ============================================================
+# CONFIG COMPARTIDO — aplica a TODOS los servicios
+# ============================================================
+kafka:
+  topics:
+    orders-created: orders.created
+    orders-approved: orders.approved
+    orders-rejected: orders.rejected
+    ai-analysis: ai.analysis

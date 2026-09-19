@@ -1,0 +1,52 @@
+# ============================================================
+# ORDER SERVICE — QUARKUS  (centralizado, sin secretos)
+# ============================================================
+
+quarkus:
+  hibernate-reactive:
+    schema-management:
+      strategy: update
+    log:
+      sql: false
+  log:
+    level: INFO
+  swagger-ui:
+    always-include: true
+  kubernetes:
+    replicas: 2
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 250m
+      limits:
+        memory: 256Mi
+        cpu: 500m
+    liveness-probe:
+      http-action-path: /q/health/live
+    readiness-probe:
+      http-action-path: /q/health/ready
+
+mp:
+  messaging:
+    outgoing:
+      orders-created:
+        connector: smallrye-kafka
+        topic: orders.created
+        value:
+          serializer: org.apache.kafka.common.serialization.StringSerializer
+      orders-approved:
+        connector: smallrye-kafka
+        topic: orders.approved
+        value:
+          serializer: org.apache.kafka.common.serialization.StringSerializer
+      orders-rejected:
+        connector: smallrye-kafka
+        topic: orders.rejected
+        value:
+          serializer: org.apache.kafka.common.serialization.StringSerializer
+  openapi:
+    extensions:
+      smallrye:
+        info:
+          title: "Order Service API (Quarkus)"
+          version: "1.0.0"

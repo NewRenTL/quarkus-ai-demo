@@ -1,0 +1,159 @@
+{
+  "title": "Quarkus vs Spring Boot — Demo Comparativo",
+  "uid": "quarkus-vs-spring-demo",
+  "tags": ["quarkus", "spring", "demo"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "5s",
+  "time": { "from": "now-5m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Throughput — Requests/seg",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "rate(http_server_requests_seconds_count{job=\"order-quarkus\"}[1m])",
+          "legendFormat": "Quarkus"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "rate(http_server_requests_seconds_count{job=\"order-spring\"}[1m])",
+          "legendFormat": "Spring Boot"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Latencia P99 — ms",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "color": { "mode": "palette-classic" } }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{job=\"order-quarkus\"}[1m])) * 1000",
+          "legendFormat": "Quarkus P99"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{job=\"order-spring\"}[1m])) * 1000",
+          "legendFormat": "Spring Boot P99"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Uso de Memoria JVM — MB",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": {
+        "defaults": { "unit": "decmbytes", "color": { "mode": "palette-classic" } }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "jvm_memory_used_bytes{job=\"order-quarkus\", area=\"heap\"} / 1024 / 1024",
+          "legendFormat": "Quarkus Heap"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "jvm_memory_used_bytes{job=\"order-spring\", area=\"heap\"} / 1024 / 1024",
+          "legendFormat": "Spring Boot Heap"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Threads Activos",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "jvm_threads_live_threads{job=\"order-quarkus\"}",
+          "legendFormat": "Quarkus Threads"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "jvm_threads_live_threads{job=\"order-spring\"}",
+          "legendFormat": "Spring Boot Threads"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Errores HTTP — 5xx/min",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\",job=\"order-quarkus\"}[1m]))",
+          "legendFormat": "Quarkus 5xx"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Errores HTTP — 5xx/min",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\",job=\"order-spring\"}[1m]))",
+          "legendFormat": "Spring Boot 5xx"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Análisis AI procesados",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "increase(http_server_requests_seconds_count{job=\"ai-quarkus\"}[5m])",
+          "legendFormat": "AI requests (5m)"
+        }
+      ]
+    }
+  ]
+}

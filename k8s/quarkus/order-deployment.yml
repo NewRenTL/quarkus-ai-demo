@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-quarkus
+  labels:
+    app: order-quarkus
+    framework: quarkus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-quarkus
+  template:
+    metadata:
+      labels:
+        app: order-quarkus
+        framework: quarkus
+    spec:
+      containers:
+        - name: order-quarkus
+          image: order-quarkus:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_URL
+              value: "postgresql://postgres-quarkus:5432/ordersdb"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              value: "postgres"
+            - name: KAFKA_BROKERS
+              value: "kafka:9092"
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-quarkus
+spec:
+  selector:
+    app: order-quarkus
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

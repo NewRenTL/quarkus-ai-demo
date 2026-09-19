@@ -1,0 +1,18 @@
+# ============================================================
+# NOTIFICATION SERVICE — QUARKUS SSE
+# ============================================================
+
+quarkus:
+  log:
+    level: INFO
+
+mp:
+  messaging:
+    incoming:
+      ai-analysis-in:
+        connector: smallrye-kafka
+        topic: ai.analysis
+        value:
+          deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        group:
+          id: notification-service
