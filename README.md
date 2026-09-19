@@ -1,6 +1,6 @@
-# Quarkus vs Spring Boot — Demo para la charla
+# Quarkus vs Spring Boot — AI Microservices Demo
 
-## Stack completo
+## Arquitectura
 
 ```
                     ┌─────────────────────────────────────────┐
@@ -10,7 +10,7 @@
                                │                  │
               ┌────────────────▼──┐          ┌────▼────────────────┐
               │  order-quarkus    │          │   order-spring       │
-              │  :8080  Reactive  │          │   :8090  Blocking    │
+              │  :8080  Reactive  │          │   :8085  Blocking    │
               │  Hibernate React. │          │   JPA + WebMVC       │
               └────────┬──────────┘          └────────┬────────────┘
                        │ Kafka orders.created          │
@@ -42,29 +42,24 @@
 ```bash
 # Windows
 winget install Docker.DockerDesktop
-# o descarga desde https://www.docker.com/products/docker-desktop/
 
 # Mac
 brew install --cask docker
 
-# Linux (Docker Engine)
+# Linux
 curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 ```
 
 ### Java 21
 ```bash
-# Windows (con scoop)
-scoop install temurin21-jdk
-# o con winget
+# Windows
 winget install EclipseAdoptium.Temurin.21.JDK
 
 # Mac
 brew install --cask temurin@21
 
-# Linux (Ubuntu/Debian)
-sudo apt install -y temurin-21-jdk
-# o con SDKMAN (cualquier SO)
+# Linux / cualquier SO con SDKMAN
 curl -s "https://get.sdkman.io" | bash
 sdk install java 21-tem
 ```
@@ -72,37 +67,18 @@ sdk install java 21-tem
 ### Maven 3.9+
 ```bash
 # Windows
-scoop install maven
-# o con winget
 winget install Apache.Maven
 
 # Mac
 brew install maven
 
-# Linux
-sudo apt install -y maven
-# o con SDKMAN
+# Linux / SDKMAN
 sdk install maven
-```
-
-### Tilt (opcional — UI de desarrollo)
-```bash
-# Windows
-scoop bucket add tilt-dev https://github.com/tilt-dev/scoop-bucket
-scoop install tilt
-
-# Mac
-brew install tilt-dev/tap/tilt
-
-# Linux
-curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
 ```
 
 ### k6 (opcional — load testing)
 ```bash
 # Windows
-scoop install k6
-# o con winget
 winget install k6
 
 # Mac
@@ -120,7 +96,7 @@ sudo apt update && sudo apt install k6
 
 ## Inicio rápido
 
-### 1. Crea y configura el archivo de entorno
+### 1. Configura el archivo de entorno
 ```bash
 # Linux / Mac
 cp .env.example .env
@@ -128,7 +104,7 @@ cp .env.example .env
 # Windows (PowerShell)
 copy .env.example .env
 ```
-Abre `.env` y reemplaza `your-gemini-api-key-here` con tu API key real.
+Abre `.env` y reemplaza `your-gemini-api-key-here` con tu API key.  
 Consíguela gratis en https://aistudio.google.com/app/apikey
 
 ### 2. Compila todos los módulos
@@ -139,159 +115,52 @@ mvn clean package -DskipTests
 
 ### 3. Levanta el stack
 ```bash
-# Opción A: docker compose directo
 docker compose up --build -d
-
-# Opción B: Tilt (UI visual con logs por servicio)
-tilt up
 ```
 
 ### 4. Verifica que todo está corriendo
 ```bash
 docker compose ps
 ```
-Todos los servicios deben aparecer como `healthy` o `running`.
-Si alguno aparece como `Exit`, revisa los logs: `docker compose logs <nombre-servicio>`
+Todos los servicios deben aparecer como `healthy` o `running`.  
+Si alguno falla: `docker compose logs <nombre-servicio>`
 
 ---
 
-## URLs del demo
+## URLs
 
-| Servicio | URL | Para qué |
-|---|---|---|
-| **Order API — Quarkus** | http://localhost:8080/swagger-ui | Crear órdenes (reactivo) |
-| **Order API — Spring** | http://localhost:8090/swagger-ui.html | Crear órdenes (bloqueante) |
-| **Config Server** | http://localhost:8888/order-quarkus/default | Ver config centralizada |
-| **Kafka UI** | http://localhost:8085 | Ver topics y mensajes en tiempo real |
-| **Grafana** | http://localhost:3000 | Dashboard comparativo (admin / demo123) |
-| **Prometheus** | http://localhost:9090/targets | Estado del scraping |
-| **SSE Notifications** | http://localhost:8082/api/notifications/stream | Stream de análisis AI |
+| Servicio | URL |
+|---|---|
+| **Order API — Quarkus** (Swagger) | http://localhost:8080/q/swagger-ui |
+| **Order API — Spring** (Swagger) | http://localhost:8085/swagger-ui |
+| **AI Service** (Swagger) | http://localhost:8081/q/swagger-ui |
+| **Notification SSE stream** | http://localhost:8082/api/notifications/stream |
+| **Config Server** | http://localhost:8888/order-quarkus/default |
+| **Kafka UI** | http://localhost:8086 |
+| **Grafana** | http://localhost:3000 (admin / demo123) |
+| **Prometheus** | http://localhost:9090/targets |
 
 ---
 
-## Flujo de la charla (paso a paso)
-
-### Paso 1 — Arranque y arquitectura
-
-Mostrar el diagrama de arriba. Puntos clave:
-- `shared-domain`: dominio puro Java, **cero imports** de Quarkus, Spring, JPA o Kafka
-- Los dos servicios de order implementan los **mismos puertos** (interfaces del dominio)
-- La diferencia es solo en los adaptadores de infraestructura
-
-### Paso 2 — Config Server centralizado
-
-Abrir en el browser: **http://localhost:8888/order-quarkus/default**
-
-El JSON muestra toda la configuración de Kafka, Hibernate y Kubernetes centralizada. Ningún secreto. Cambiar el modelo de Gemini en `ai-quarkus.yml` no requiere redesplegar el servicio.
-
-### Paso 3 — Crear una orden y ver el flujo completo
-
-En Swagger de Quarkus (http://localhost:8080/swagger-ui), ejecutar:
-
-```json
-POST /api/orders
-{
-  "customerId": "cliente-vip-001",
-  "customerEmail": "vip@demo.com",
-  "country": "PE",
-  "items": [
-    {
-      "productId": "laptop-pro",
-      "productName": "Laptop Pro 16",
-      "quantity": 3,
-      "price": 2500.00
-    }
-  ]
-}
-```
-
-Luego, en **Kafka UI** (http://localhost:8085):
-1. Topic `orders.created` → ver el mensaje con la orden
-2. Esperar ~3-5 segundos → Topic `ai.analysis` → ver el análisis de fraude devuelto por Gemini
-
-En paralelo, abrir el **SSE stream** en otra pestaña:
-```
-http://localhost:8082/api/notifications/stream
-```
-Se ve el evento de análisis AI llegar en tiempo real.
-
-### Paso 4 — El mismo flujo con Spring Boot
-
-Repetir el paso 3 con Swagger de Spring (http://localhost:8090/swagger-ui.html).
-El código del dominio es idéntico — solo cambia el framework del adaptador.
-
-### Paso 5 — Load test en vivo con k6
+## Load test comparativo
 
 ```bash
-# Instalar k6 (si no está)
-scoop install k6   # Windows
-
-# Ejecutar benchmark comparativo
 k6 run benchmark/k6/load-test-comparison.js
 ```
 
-Mientras corre, abrir **Grafana** (http://localhost:3000 → admin / demo123):
-- Dashboard: **"Quarkus vs Spring Boot — Demo Comparativo"**
-
-Lo que verás en los paneles:
-- **Throughput**: requests/seg lado a lado
-- **Latencia P99**: Quarkus generalmente menor en alta carga
-- **Memoria JVM**: Quarkus ~80MB heap vs Spring ~250MB ← el "wow" visual
-- **Threads**: Quarkus event loop vs Spring thread-per-request
-
-### Paso 6 — El "wow" del startup
-
-```bash
-# Detener los servicios de orden
-docker compose stop order-quarkus order-spring
-
-# Arrancarlos y contar en voz alta
-docker compose start order-quarkus   # ~2-3 segundos
-docker compose start order-spring    # ~8-12 segundos
-```
-
-O en Kubernetes (con k3d):
-```bash
-k3d cluster create demo
-kubectl apply -f k8s/quarkus/
-kubectl apply -f k8s/spring/
-kubectl get pods -w   # Observar cuál llega a Ready primero
-```
+Con k6 corriendo, abre Grafana → dashboard **"Quarkus vs Spring Boot — Demo Comparativo"** para ver métricas en tiempo real.
 
 ---
 
-## Ver Grafana paso a paso
+## Apagar el stack
 
-1. Abrir http://localhost:3000
-2. Login: `admin` / `demo123`
-3. Menú izquierdo → **Dashboards** → carpeta **"Demo — Quarkus vs Spring"**
-4. Abrir **"Quarkus vs Spring Boot — Demo Comparativo"**
+```bash
+# Solo detener contenedores
+docker compose down
 
-El dashboard se actualiza cada 5 segundos. Con k6 corriendo se ven las métricas en tiempo real.
-
----
-
-## El "wow" con Gemini AI — orden de alto riesgo
-
-Crear una orden que Gemini marque como HIGH_RISK:
-```json
-POST /api/orders
-{
-  "customerId": "new-user-001",
-  "customerEmail": "x@temp.com",
-  "country": "PE",
-  "items": [
-    {
-      "productId": "iphone-15-pro",
-      "productName": "iPhone 15 Pro Max",
-      "quantity": 10,
-      "price": 1500.00
-    }
-  ]
-}
+# Detener y borrar volúmenes (PostgreSQL + Grafana)
+docker compose down -v
 ```
-
-En Kafka UI → topic `ai.analysis`: ver la respuesta de Gemini con `riskLevel: HIGH`.
 
 ---
 
@@ -299,9 +168,9 @@ En Kafka UI → topic `ai.analysis`: ver la respuesta de Gemini con `riskLevel: 
 
 | Problema | Solución |
 |---|---|
-| Stack no arranca | `docker compose down -v && mvn package -DskipTests && docker compose up -d` |
+| Stack no arranca | `docker compose down -v && mvn package -DskipTests && docker compose up --build -d` |
 | Config Server 500 | Verificar que `mvn package` compiló el JAR de config-server |
-| Gemini no responde | Verificar `GEMINI_API_KEY` en `.env` — debe ser una key válida y activa |
+| Gemini no responde | Verificar `GEMINI_API_KEY` en `.env` — debe ser válida y activa |
 | Grafana sin datos | Esperar 30s; verificar targets en http://localhost:9090/targets |
 | Kafka UI vacío | Crear al menos una orden — los topics se crean con el primer mensaje |
-| Port 5432 en uso | Ya configurado en 5434/5435 — tu Postgres local no interfiere |
+| Port 5432 en uso | Postgres expuesto en 5434/5435 — no interfiere con una instalación local |
